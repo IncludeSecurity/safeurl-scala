@@ -53,6 +53,9 @@ class Configuration {
   /** Do secure redirects, revalidate each redirect location first. */
   var secureRedirects: Boolean = true
 
+  /** Support IPv6, disabled by default since the default blacklist relies on NAT for security */
+  var supportIPv6: Boolean = false
+
   /** The maximum number of redirects SaveCurl will follow. */
   var maxRedirects: Int = 20
 
