@@ -92,8 +92,18 @@ object SafeURL {
     * @param host hostname or IP address to resolve
     * @return an array of IP addresses the hostname/IP resolves to
     */
-  private def resolve(host: String): Array[String] = {
-    InetAddress.getAllByName(host) map (_.getHostAddress)
+  private def resolve(host: String, cfg: Configuration = defaultConfiguration): Array[String] = {
+    var hosts = InetAddress.getAllByName(host)
+    if (!cfg.supportIPv6) {
+      val v4Hosts = hosts filter (_.isInstanceOf[Inet4Address])
+      if (v4Hosts.isEmpty && !hosts.isEmpty) {
+        // Treat IPv6-only results as if there was a lookup error,
+        // doesn't seem to be a way to force an IPv4-only lookup.
+        throw new UnknownHostException(host + ": Name or service not known");
+      }
+      hosts = v4Hosts
+    }
+    hosts map (_.getHostAddress)
   }
 
   /** Check if the given IP address lies within the subnet given in CIDR notation.
@@ -259,7 +269,7 @@ object SafeURL {
     }
 
     // Validate the IP
-    val ips = resolve(host)
+    val ips = resolve(host, cfg)
     for (ip <- ips) {
       // Note: Doing it this way means that when IP whitelisting is active,
       // every IP a given hostname resolves to must be in the whitelist.
